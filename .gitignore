@@ -1,0 +1,4 @@
+icons/*
+!icons/.gitinclude
+output/*
+!output/.gitinclude
