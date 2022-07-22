@@ -16,7 +16,7 @@ python3 main.py <x,y> <icons> <placements>
 ### Example
 To generate a 2x4 foreground image with row order `blanks -> stars -> hearts -> blanks`
 ```shell
-python3 main.py 2,4 star,heart 0,0-1,1-2,2
+python3 main.py star,heart 2,4 0,0-1,1-2,2
 ```
 
 ### Paths

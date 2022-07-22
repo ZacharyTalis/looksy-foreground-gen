@@ -6,10 +6,10 @@ from PIL import Image
 # If help requested, print help message
 if ((len(sys.argv) == 1) or ("help" in sys.argv[1])):
     helpMessage = \
-"""Format: python3 main.py <x,y> <icons> <placements>
+"""Format: python3 main.py <icons> <x,y> <placements>
 
 Example: To generate a 2x4 foreground image with row order \"blanks -> stars -> hearts -> blanks\"
-python3 main.py 2,4 star,heart 0,0-1,1-2,2
+python3 main.py star,heart 2,4 0,0-1,1-2,2
 
 Paths: All icons should be PNGs and reside within the \"icons\" folder. Each output is saved to the \"output\" folder as \"foreground.png\"."""
     print(helpMessage)
@@ -28,9 +28,9 @@ gapSizePx  = 82 # cellSizePx + 24px between cells
 
 # Constants (based on arguments)
 try:
-    rawDimensions = [int(x) for x in sys.argv[1].split(",")]
+    iconNames     = sys.argv[1].split(",")
+    rawDimensions = [int(x) for x in sys.argv[2].split(",")]
     dimensions    = [calcImageSize(x) for x in rawDimensions]
-    iconNames     = sys.argv[2].split(",")
     placements    = [x.split(",") for x in sys.argv[3].split("-")]
 except:
     sys.exit("Arguments missing or not recognized! Refer to \"main.py --help\" for argument format.")
