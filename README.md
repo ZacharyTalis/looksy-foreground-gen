@@ -10,7 +10,7 @@ Thanks to Mak for the foreground image size equation!
 
 ### Format
 ```shell
-python3 main.py <x,y> <icons> <placements>
+python3 main.py <icons> <x,y> <placements>
 ```
 
 ### Example
