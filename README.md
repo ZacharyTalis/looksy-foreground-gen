@@ -4,7 +4,7 @@ A generator script for [Looksy](https://prodzpod.github.io/witness/editor.html) 
 
 Only works for in-cell icons (no support for in-path icons).
 
-Thanks to Mak for the foreground image size equation and u-ndefined for the icon tinting implementation!
+Thanks to Mak for the foreground image size equation and to u-ndefined for the icon tinting implementation!
 
 **[Google Colab version (runs in-browser)](https://colab.research.google.com/drive/1P9meW2hCtEZAgQxFuaYNTFlxUSzxduGE)**
 
