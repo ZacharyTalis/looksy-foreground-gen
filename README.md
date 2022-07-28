@@ -61,5 +61,5 @@ python3 main.py star,heart white 2,4 0,0-1,1-2,2
 A 3x3 foreground image with hearts placed diagonally, and each row is colored in red, green, then blue:
 
 ```shell
-python3 main.py heart red,green,blue 3,3 0,0,1-0,1c1,0-1c2
+python3 main.py heart looksy-red,looksy-green,looksy-blue 3,3 0,0,1-0,1c1,0-1c2
 ```
