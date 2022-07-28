@@ -6,10 +6,15 @@ from PIL import Image
 # If help requested, print help message
 if ((len(sys.argv) == 1) or ("help" in sys.argv[1])):
     helpMessage = \
-"""Format: python3 main.py <icons> <colors> <x,y> <placements>
+"""Format: python3 main.py <icons> [colors] <x,y> <placements>
 
-Example: To generate a 2x4 foreground image with row order \"blanks -> stars -> hearts -> blanks\"
-python3 main.py star,heart white 2,4 0,0-1,1-2,2
+Examples:
+
+Generate a 2x4 foreground image with row order \"blanks -> stars -> hearts -> blanks\".
+python3 main.py star,heart 2,4 0,0-1,1-2,2
+
+Generate a 3x3 foreground image with hearts placed diagonally. Each row is colored in red, then green, then blue.
+python3 main.py heart looksy-red,looksy-green,looksy-blue 3,3 0,0,1c1-0,1c2,0-1c3
 
 Paths: All icons should be PNGs and reside within the \"icons\" folder. Each output is saved to the \"output\" folder as \"foreground.png\"."""
     print(helpMessage)
@@ -26,15 +31,24 @@ cellSizePx = 58 # height and width of a cell
 edgeSizePx = 64 # offset from edge of image to first row/column
 gapSizePx  = 82 # cellSizePx + 24px between cells
 
-# Constants (based on arguments)
+# Input values (based on arguments)
 try:
-    iconNames     = sys.argv[1].split(",")
-    colorNames    = sys.argv[2].split(",")
-    rawDimensions = [int(x) for x in sys.argv[3].split(",")]
-    dimensions    = [calcImageSize(x) for x in rawDimensions]
-    placements    = [[c.split('c') for c in x.split(",")] for x in sys.argv[4].split("-")]
+    iconNames = sys.argv[1].split(",")
+    # Handle optional color argument
+    i = 2
+    hasColors = False
+    colorNames = []
+    if ((not sys.argv[i][0].isdigit()) or (sys.argv[i][0] == "+") or (len(sys.argv[i].split(",")[0].split("-")) == 3)):
+        hasColors = True
+        colorNames = sys.argv[i].split(",")
+        i += 1
+    rawDimensions = [int(x) for x in sys.argv[i].split(",")]
+    dimensions = [calcImageSize(x) for x in rawDimensions]
+    placements = [[c.split('c') for c in x.split(",")] for x in sys.argv[i+1].split("-")]
 except:
     sys.exit("Arguments missing or not recognized! Refer to \"main.py --help\" for argument format.")
+if (not len(rawDimensions) == 2):
+    sys.exit(f"Panel size argument \"{sys.argv[i]}\" must contain exactly two values \"x,y\"!")
 
 # Check if dimensions are valid, else return error
 if (rawDimensions[0] <= 0):
@@ -120,25 +134,33 @@ colors = \
       "magenta": (255, 0, 255)
     }
 
+# Replace 3-digit hexcodes with 6-digit equivalents
+# (we want to keep stored colorNames "canonical")
+tempColorNames = []
 for colorName in colorNames:
-    # using predefined table
+    if (len(colorName) == 4 and colorName[0] == '+' and all(x in "0123456789ABCDEFabcdef" for x in colorName[1:])):
+        tempColorNames.append(f"+{colorName[1]}{colorName[1]}{colorName[2]}{colorName[2]}{colorName[3]}{colorName[3]}")
+    else:
+        tempColorNames.append(colorName)
+colorNames = tempColorNames
+
+# Handle various types of colorNames
+for colorName in colorNames:
+    # Using predefined table
     if colorName in colors:
         pass
-
-    # hexcode (3 digit)
-    elif len(colorName) == 4 and colorName[0] == '#' and all(x in "0123456789ABCDEFabcdef" for x in colorName[1:]):
-        colors[colorName] = (int(x, 16) * 16 for x in colorName[1:])
-
-    # hexcode (6 digit)
-    elif len(colorName) == 7 and colorName[0] == '#' and all(x in "0123456789ABCDEFabcdef" for x in colorName[1:]):
+    # Hexcode
+    elif (len(colorName) == 7 and colorName[0] == '+' and all(x in "0123456789ABCDEFabcdef" for x in colorName[1:])):
         colors[colorName] = tuple(int(colorName[r:r+2], 16) for r in range(1, 7, 2))
-
-    # rgb 
-    elif len(colorName.split('-')) == 3:
-        colors[colorName] = (int(x) for x in colorName.split('-'))
-
+    # RGB 
+    elif (len(colorName.split('-')) == 3):
+        try:
+            colors[colorName] = list(int(x) for x in colorName.split('-'))
+        except:
+            sys.exit(f"Syntax error for RGB color with name \"{colorName}\"!")
+    # colorName format not recognized
     else:
-        sys.exit("Syntax error! {colorName}")
+        sys.exit(f"Syntax error for color with name \"{colorName}\"!")
 
 # Generate image
 baseImage = Image.new("RGBA", dimensions)
@@ -151,23 +173,28 @@ for row in placements:
         if (iconValue.isdigit()):
             iconValue = int(iconValue)
             if (iconValue > len(iconNames)):
-                sys.exit(f"Specified icon value \"{iconValue}\" doesn't correspond to any specified icon!")
+                sys.exit(f"Specified icon index \"{iconValue}\" doesn't correspond to any specified icon!")
+            # Time to generate and place an icon
             if (iconValue > 0):
                 colorValue = cell[1] if len(cell) > 1 and cell[1] else '0'
                 if(colorValue.isdigit()):
                     colorValue = int(colorValue)
-                    if (colorValue >= len(colorNames)):
-                        sys.exit(f"Specified color value \"{colorValue}\" doesn't correspond to any specified color icon!")
-
+                    if (colorValue > len(colorNames)):
+                        sys.exit(f"Specified color index \"{colorValue}\" doesn't correspond to any specified color!")
                     currentIcon = icons[iconNames[iconValue - 1]]
-                    rgb = (cIcon.point(lambda x: x * cColor / 255) for cIcon, cColor in zip(currentIcon.split(), colors[colorNames[colorValue]]))
-                    a = currentIcon.split()[-1]
-                    baseImage.paste(Image.merge("RGBA", [*rgb, a]), (currentX, currentY))
+                    # If color tint requested, paste icon with appropriate tint
+                    if (colorValue != 0):
+                        rgb = (cIcon.point(lambda x: x * cColor // 255) for cIcon, cColor in zip(currentIcon.split(), colors[colorNames[colorValue-1]]))
+                        a = currentIcon.split()[-1]
+                        baseImage.paste(Image.merge("RGBA", [*rgb, a]), (currentX, currentY))
+                    # Otherwise, paste icon normally
+                    else:
+                        baseImage.paste(currentIcon, (currentX, currentY))
                     iconPlaced = True
                 else:
-                    sys.exit(f"Color value {colorValue} isn't a digit!")
+                    sys.exit(f"Color index {colorValue} isn't a digit!")
         elif (not len(iconValue) == 0):
-            sys.exit(f"Icon value {iconValue} isn't a digit!")
+            sys.exit(f"Icon index {iconValue} isn't a digit!")
         currentX += gapSizePx
     currentY += gapSizePx
 if (not iconPlaced):
