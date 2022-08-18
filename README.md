@@ -4,7 +4,9 @@ A generator script for [Looksy](https://prodzpod.github.io/witness/editor.html) 
 
 Only works for in-cell icons (no support for in-path icons).
 
-Thanks to Mak for the foreground image size equation and to u-ndefined for the icon tinting implementation!
+Stock icons fall under the [BSD 3-Clasuse License](https://github.com/prodzpod/witness/blob/master/LICENSE).
+
+Thanks to Mak for the foreground image size equation and to u-ndefined for the icon tinting implementation/fetching the stock icons!
 
 **[Google Colab version (runs in-browser)](https://colab.research.google.com/drive/1P9meW2hCtEZAgQxFuaYNTFlxUSzxduGE)**
 
